@@ -46,12 +46,32 @@ arm	= False
 
 class armButton:
 	def __init__(self):
+		self.color= RED
 		self.size = [200, 75]
 		self.center = [controlWindowWidth/2, controlWindowHeight/2]
 		self.datum = [self.center[0]-self.size[0]/2, 625+self.size[1]/2]
-		pygame.draw.rect(controlWindow, RED, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
+		self.left  = self.datum[0]
+		self.right = self.datum[0]+self.size[0]
+		self.top   = self.datum[1]
+		self.bottom= self.datum[1]+self.size[1]
 
-	#def drawBox(self):
+		self.isArmed = False
+
+	def drawBox(self):
+		pygame.draw.rect(controlWindow, self.color, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
+
+	def isClicked(self, mousePosition):
+		xCond = self.left<mousePosition[0]<self.right
+		yCond =	self.top<mousePosition[1]<self.bottom
+		if(xCond and yCond):
+			if(not self.isArmed):
+				self.isArmed=True
+				self.color  =GREEN
+			else:
+				self.isArmed=False
+				self.color  =RED
+			return True
+		else: return False
 
 class joystickBackground:
 	def __init__(self, width, height):
@@ -79,7 +99,7 @@ def drawBackground():
 	joystick.drawBorder()
 	joystick.drawMidLine()
 
-	arming = armButton()
+	arming.drawBox()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
 def drawOutputCircle():
@@ -118,18 +138,19 @@ def display():
 			run = False
 			pygame.quit()
 			sys.exit()
-		if e.type == pygame.MOUSEBUTTONDOWN:
+		while e.type == pygame.MOUSEBUTTONDOWN:
 			getPos = pygame.mouse.get_pos()
 			if(insideBoxOrNot(getPos,joystickMinBorder,joystickMaxBorder)):
-				center[0] = constraint(getPos[0], 125, 625)
-				center[1] = constraint(getPos[1], 125, 625)
-
-				print("Inside")
+				center[0] = getPos[0]
+				center[1] = getPos[1]
 				myPosX, myPosY = globalToLocal(center[0], center[1])
 				myPosX, myPosY = transform(myPosX, myPosY)
-
 				vel_msg.angular.z = myPosX/10
 				vel_msg.linear.x = myPosY/10
+			else:
+				if(arming.isClicked(getPos)):
+					print("clicked")
+					#publish ARM CONDITION
 
 	centerTrack[0], centerTrack[1] = pygame.mouse.get_pos()
 	centerTrack[0] = constraint(centerTrack[0], 125, 625)
@@ -156,6 +177,7 @@ def publisher():
 	rospy.spin()
 
 if __name__ == '__main__':
+	arming = armButton()
 	publisher()
 
 ###Below here are probably useful functions, "probably"
