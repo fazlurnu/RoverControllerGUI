@@ -3,6 +3,7 @@
 import rospy
 from std_msgs.msg import Float64
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Bool
 
 import pygame
 import sys
@@ -10,8 +11,8 @@ import time
 import numpy as np
 
 pygame.init()
-controlWindowWidth  = 500
-controlWindowHeight = 500
+controlWindowWidth  = 750
+controlWindowHeight = 750
 controlWindow = pygame.display.set_mode((controlWindowWidth,controlWindowHeight))
 pygame.display.set_caption("Controller")
 
@@ -36,17 +37,27 @@ lineWidth = 3
 run = True
 
 vel_msg = Twist()
+arm	= False
+
+class joystickBackground:
+	def __init__(self, width, height):
+		self.center = [controlWindowWidth/2, controlWindowHeight/2]
+		self.datum  = [(controlWindowWidth-width)/2, (controlWindowHeight-height)/2]
+
+	def drawMidLine():
+		#vertical line
+		pygame.draw.line(controlWindow, RED, (center[0], datum[1]), (center[0], datum[1]+50), lineWidth)
+		pygame.draw.line(controlWindow, RED, (center[0], datum[1]), (center[0], datum[1]+50), lineWidth)
+		pygame.draw.line(controlWindow, RED, (center[0], controlWindowHeight-50), (controlWindowWidth/2, controlWindowHeight), lineWidth)
+		pygame.draw.line(controlWindow, RED, (controlWindowWidth/2, controlWindowHeight/2-25), (controlWindowWidth/2, controlWindowHeight/2+25), lineWidth)
+
+		pygame.draw.line(controlWindow, RED, (0, controlWindowHeight/2), (50, controlWindowHeight/2), lineWidth)
+		pygame.draw.line(controlWindow, RED, (controlWindowWidth-50, controlWindowHeight/2), (controlWindowWidth, controlWindowHeight/2), lineWidth)
+		pygame.draw.line(controlWindow, RED, (controlWindowWidth/2-25, controlWindowHeight/2), (controlWindowWidth/2+25, controlWindowHeight/2), lineWidth)	
 
 def drawBackground():
 	controlWindow.fill(WHITE)
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
-	pygame.draw.line  (controlWindow, RED, (controlWindowWidth/2, 0), (controlWindowWidth/2, 50), lineWidth)
-	pygame.draw.line  (controlWindow, RED, (controlWindowWidth/2, controlWindowHeight-50), (controlWindowWidth/2, controlWindowHeight), lineWidth)
-	pygame.draw.line  (controlWindow, RED, (controlWindowWidth/2, controlWindowHeight/2-25), (controlWindowWidth/2, controlWindowHeight/2+25), lineWidth)
-
-	pygame.draw.line  (controlWindow, RED, (0, controlWindowHeight/2), (50, controlWindowHeight/2), lineWidth)
-	pygame.draw.line  (controlWindow, RED, (controlWindowWidth-50, controlWindowHeight/2), (controlWindowWidth, controlWindowHeight/2), lineWidth)
-	pygame.draw.line  (controlWindow, RED, (controlWindowWidth/2-25, controlWindowHeight/2), (controlWindowWidth/2+25, controlWindowHeight/2), lineWidth)	
 
 def drawOutputCircle():
 	pygame.draw.circle(controlWindow, RED  , (center[0],center[1]), radius)
@@ -76,7 +87,7 @@ def display():
 			myPosX, myPosY = transform(center[0], center[1])
 			vel_msg.angular.z = myPosX/10
 			vel_msg.linear.x = myPosY/10
-
+		if e.type == 
 	centerTrack[0], centerTrack[1] = pygame.mouse.get_pos()
 
 	drawToScreen()
@@ -84,7 +95,8 @@ def display():
 
 def publisher():
 	rospy.init_node('controller', anonymous = True)
-	pub = rospy.Publisher('/positionControl', Twist, queue_size=1)
+	pub 	= rospy.Publisher('/positionControl', Twist, queue_size=1)
+	pubArm 	= rospy.Publisher('/armCommand'	, Bool , queue_size=1)
 
 	vel_msg.linear.y = 0
 	vel_msg.linear.z = 0
@@ -94,6 +106,7 @@ def publisher():
 	while not rospy.is_shutdown():
 		display()
 		pub.publish(vel_msg)
+		pubArm.publish(arm)
 
 	rospy.spin()
 
