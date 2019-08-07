@@ -47,7 +47,9 @@ class joystickBackground:
 		self.size   = [width, height]
 		self.center = [controlWindowWidth/2, controlWindowHeight/2]
 		self.datum  = [(controlWindowWidth-width)/2, (controlWindowHeight-height)/2]
-		pygame.draw.rect(controlWindow, RED, (self.datum[0], self.datum[1], width, height), lineWidth)
+
+	def drawBorder(self):
+		pygame.draw.rect(controlWindow, RED, (self.datum[0], self.datum[1], self.size[0], self.size[1]), lineWidth)
 
 	def drawMidLine(self):
 		#vertical line
@@ -62,6 +64,7 @@ class joystickBackground:
 def drawBackground():
 	controlWindow.fill(WHITE)
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
+	joystick.drawBorder()
 	joystick.drawMidLine()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
