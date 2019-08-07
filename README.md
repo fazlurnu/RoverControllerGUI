@@ -5,11 +5,11 @@ To run ROS in another "ROS" enable hardware, do this following script in termina
 
 
 $   export ROS_MASTER_URI=http://rosHardwareIPAddress:11311
-
+--------------------------
 $   export ROS_MASTER_URI=http://192.168.43.234:11311 //In this case
 
 $   export ROS_IP=yourIPAddress
-
+--------------------------
 $   export ROS_IP=192.168.43.135 //In this case
 
 To check your IP Address:
