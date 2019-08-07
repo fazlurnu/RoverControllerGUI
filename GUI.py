@@ -16,19 +16,22 @@ controlWindowHeight = 750
 controlWindow = pygame.display.set_mode((controlWindowWidth,controlWindowHeight))
 pygame.display.set_caption("Controller")
 
+joystickWindowWidth = 500
+joystickWindowHeight= 500
+
 #color
 RED 	= (250,  0,  0)
 GREEN	= (  0,250,  0)
 BLUE	= (  0,  0,255)
 BLACK	= (  0,  0,  0)
 WHITE	= (250,250,250)
- 
+
 #circle params
-center=[250,250]
+center=[controlWindowWidth/2,controlWindowHeight/2]
 radius = 10
 
 #tracking circle params
-centerTrack = [250, 250]
+centerTrack=[controlWindowWidth/2,controlWindowHeight/2]
 radiusTrack = 8
 
 #line params
@@ -41,22 +44,25 @@ arm	= False
 
 class joystickBackground:
 	def __init__(self, width, height):
+		self.size   = [width, height]
 		self.center = [controlWindowWidth/2, controlWindowHeight/2]
 		self.datum  = [(controlWindowWidth-width)/2, (controlWindowHeight-height)/2]
+		pygame.draw.rect(controlWindow, RED, (self.datum[0], self.datum[1], width, height), lineWidth)
 
-	def drawMidLine():
+	def drawMidLine(self):
 		#vertical line
-		pygame.draw.line(controlWindow, RED, (center[0], datum[1]), (center[0], datum[1]+50), lineWidth)
-		pygame.draw.line(controlWindow, RED, (center[0], datum[1]), (center[0], datum[1]+50), lineWidth)
-		pygame.draw.line(controlWindow, RED, (center[0], controlWindowHeight-50), (controlWindowWidth/2, controlWindowHeight), lineWidth)
-		pygame.draw.line(controlWindow, RED, (controlWindowWidth/2, controlWindowHeight/2-25), (controlWindowWidth/2, controlWindowHeight/2+25), lineWidth)
+		pygame.draw.line(controlWindow, RED, (self.center[0], self.datum[1]), (self.center[0], self.datum[1]+50), lineWidth)
+		pygame.draw.line(controlWindow, RED, (self.center[0], self.size[1]+50), (self.center[0], self.size[1]+self.datum[1]), lineWidth)
+		pygame.draw.line(controlWindow, RED, (self.center[0], self.center[1]-25), (self.center[0], self.center[1]+25), lineWidth)
 
-		pygame.draw.line(controlWindow, RED, (0, controlWindowHeight/2), (50, controlWindowHeight/2), lineWidth)
-		pygame.draw.line(controlWindow, RED, (controlWindowWidth-50, controlWindowHeight/2), (controlWindowWidth, controlWindowHeight/2), lineWidth)
-		pygame.draw.line(controlWindow, RED, (controlWindowWidth/2-25, controlWindowHeight/2), (controlWindowWidth/2+25, controlWindowHeight/2), lineWidth)	
+		pygame.draw.line(controlWindow, RED, (self.datum[0], self.center[1]), (self.datum[1]+50, self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, RED, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, RED, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
 
 def drawBackground():
 	controlWindow.fill(WHITE)
+	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
+	joystick.drawMidLine()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
 def drawOutputCircle():
@@ -71,9 +77,19 @@ def drawToScreen():
 	drawOutputCircle()
 	drawTrackingCircle()
 
+def globalToLocal(posX, posY):
+	return posX-(controlWindowWidth-joystickWindowWidth)/2,  posY-(controlWindowHeight-joystickWindowHeight)/2
+
 def transform(posX, posY):
 	#transform from frame coordinate to "remote control" coordinate
 	return posX-250, -(posY-250)
+
+def constraint(pos, min, max):
+	posCalc = pos
+	if pos > max: posCalc = max
+	elif pos < min: posCalc = min
+
+	return posCalc
 
 def display():
 	pygame.time.delay(100)
@@ -84,11 +100,18 @@ def display():
 			sys.exit()
 		if e.type == pygame.MOUSEBUTTONDOWN:
 			center[0], center[1] = pygame.mouse.get_pos()
-			myPosX, myPosY = transform(center[0], center[1])
+			center[0] = constraint(centerTrack[0], 125, 625)
+			center[1] = constraint(centerTrack[1], 125, 625)
+
+			myPosX, myPosY = globalToLocal(center[0], center[1])
+			myPosX, myPosY = transform(myPosX, myPosY)
+
 			vel_msg.angular.z = myPosX/10
 			vel_msg.linear.x = myPosY/10
-		if e.type == 
+
 	centerTrack[0], centerTrack[1] = pygame.mouse.get_pos()
+	centerTrack[0] = constraint(centerTrack[0], 125, 625)
+	centerTrack[1] = constraint(centerTrack[1], 125, 625)
 
 	drawToScreen()
 	pygame.display.update()
