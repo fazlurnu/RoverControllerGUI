@@ -18,6 +18,8 @@ pygame.display.set_caption("Controller")
 
 joystickWindowWidth = 500
 joystickWindowHeight= 500
+joystickMinBorder   = 125
+joystickMaxBorder   = 625
 
 #color
 RED 	= (250,  0,  0)
@@ -42,6 +44,15 @@ run = True
 vel_msg = Twist()
 arm	= False
 
+class armButton:
+	def __init__(self):
+		self.size = [200, 75]
+		self.center = [controlWindowWidth/2, controlWindowHeight/2]
+		self.datum = [self.center[0]-self.size[0]/2, 625+self.size[1]/2]
+		pygame.draw.rect(controlWindow, RED, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
+
+	#def drawBox(self):
+
 class joystickBackground:
 	def __init__(self, width, height):
 		self.size   = [width, height]
@@ -57,6 +68,7 @@ class joystickBackground:
 		pygame.draw.line(controlWindow, RED, (self.center[0], self.size[1]+50), (self.center[0], self.size[1]+self.datum[1]), lineWidth)
 		pygame.draw.line(controlWindow, RED, (self.center[0], self.center[1]-25), (self.center[0], self.center[1]+25), lineWidth)
 
+		#horizontal line
 		pygame.draw.line(controlWindow, RED, (self.datum[0], self.center[1]), (self.datum[1]+50, self.center[1]), lineWidth)
 		pygame.draw.line(controlWindow, RED, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
 		pygame.draw.line(controlWindow, RED, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
@@ -66,6 +78,8 @@ def drawBackground():
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
 	joystick.drawBorder()
 	joystick.drawMidLine()
+
+	arming = armButton()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
 def drawOutputCircle():
@@ -94,6 +108,9 @@ def constraint(pos, min, max):
 
 	return posCalc
 
+def insideBoxOrNot(pos, min, max):
+	if(min<pos[0]<max and min<pos[1]<max): return True
+
 def display():
 	pygame.time.delay(100)
 	for e in pygame.event.get():
@@ -102,15 +119,17 @@ def display():
 			pygame.quit()
 			sys.exit()
 		if e.type == pygame.MOUSEBUTTONDOWN:
-			center[0], center[1] = pygame.mouse.get_pos()
-			center[0] = constraint(centerTrack[0], 125, 625)
-			center[1] = constraint(centerTrack[1], 125, 625)
+			getPos = pygame.mouse.get_pos()
+			if(insideBoxOrNot(getPos,joystickMinBorder,joystickMaxBorder)):
+				center[0] = constraint(getPos[0], 125, 625)
+				center[1] = constraint(getPos[1], 125, 625)
 
-			myPosX, myPosY = globalToLocal(center[0], center[1])
-			myPosX, myPosY = transform(myPosX, myPosY)
+				print("Inside")
+				myPosX, myPosY = globalToLocal(center[0], center[1])
+				myPosX, myPosY = transform(myPosX, myPosY)
 
-			vel_msg.angular.z = myPosX/10
-			vel_msg.linear.x = myPosY/10
+				vel_msg.angular.z = myPosX/10
+				vel_msg.linear.x = myPosY/10
 
 	centerTrack[0], centerTrack[1] = pygame.mouse.get_pos()
 	centerTrack[0] = constraint(centerTrack[0], 125, 625)
