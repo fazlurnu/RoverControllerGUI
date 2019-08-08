@@ -18,8 +18,8 @@ BLACK	= (  0,  0,  0)
 WHITE	= (250,250,250)
 GREY	= (175,175,175)
 
-LIGHT_RED	= (175,  0,  0)
-LIGHT_GREEN	= (  0, 175,  0)
+DARK_RED    = (175,  0,  0)
+DARK_GREEN  = (  0,175,  0)
 
 pygame.init()
 controlWindowWidth  = 750
@@ -53,7 +53,7 @@ arm	= False
 
 class armButton:
 	def __init__(self):
-		self.color= LIGHT_RED
+		self.color= DARK_RED
 		self.lineWidth = 7
 
 		self.size = [200, 75]
@@ -75,16 +75,7 @@ class armButton:
 	def isClicked(self, mousePosition):
 		xCond = self.left<mousePosition[0]<self.right
 		yCond =	self.top<mousePosition[1]<self.bottom
-		if(xCond and yCond):
-			if(not self.isArmed):
-				print("Armed")
-				self.isArmed=True
-				self.setColor(LIGHT_GREEN)
-			else:
-				print("Disarmed")
-				self.isArmed=False
-				self.setColor(LIGHT_RED)
-			return True
+		if(xCond and yCond): return True
 		else: return False
 
 	def setColor(self, color):
@@ -96,6 +87,9 @@ class armButton:
 		if(xCond and yCond):
 			return True
 		else: return False
+
+	def setIsArmed(self, cond):
+		self.isArmed = cond
 
 class joystickBackground:
 	def __init__(self, width, height):
@@ -192,8 +186,12 @@ def display():
 				vel_msg.angular.z = myPosX/10
 				vel_msg.linear.x = myPosY/10
 			elif(arming.isClicked(getPos)):
-					print()
-					#publish ARM CONDITION
+				if(not arming.isArmed):
+					print("Armed")
+					arming.setIsArmed(True)
+				else:
+					print("Disarmed")
+					arming.setIsArmed(False)
 
 	mousePos = pygame.mouse.get_pos()
 	if(joystick.isInsideBox(mousePos)):
@@ -212,9 +210,9 @@ def display():
 		arming.setColor(GREEN)
 		arming.drawBorder()
 	elif(not arming.isInsideBox(mousePos) and arming.isArmed):
-		arming.setColor(LIGHT_GREEN)
+		arming.setColor(DARK_GREEN)
 	elif(not arming.isInsideBox(mousePos) and not arming.isArmed):
-		arming.setColor(LIGHT_RED)
+		arming.setColor(DARK_RED)
 
 	drawToScreen()
 	pygame.display.update()
@@ -232,7 +230,7 @@ def publisher():
 	while not rospy.is_shutdown():
 		display()
 		pub.publish(vel_msg)
-		pubArm.publish(arm)
+		pubArm.publish(arming.isArmed)
 
 	rospy.spin()
 
