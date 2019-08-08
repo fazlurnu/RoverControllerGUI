@@ -51,6 +51,25 @@ run = True
 vel_msg = Twist()
 arm	= False
 
+class armText:
+	def __init__(self):
+		self.myText = 'Disrmed'
+		self.textColor = BLACK
+		self.fontSize  = 50
+		self.font = pygame.font.Font('freesansbold.ttf', self.fontSize)
+		self.text = self.font.render(self.myText, True, self.textColor)
+		self.textRect = self.text.get_rect()
+		self.textRect.center = (controlWindowWidth/2,63)
+
+	def drawText(self):
+		controlWindow.blit(self.text, self.textRect)
+
+	def setMyText(self, yourText):
+		self.myText = yourText
+		self.text = self.font.render(self.myText, True, self.textColor)
+		self.textRect = self.text.get_rect()
+		self.textRect.center = (controlWindowWidth/2,63)
+
 class armButton:
 	def __init__(self):
 		self.color= DARK_RED
@@ -141,6 +160,8 @@ def drawBackground():
 	joystick.drawBorder()
 	joystick.drawMidLine()
 	arming.drawBox()
+
+	armingText.drawText()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
 def drawOutputCircle():
@@ -189,9 +210,11 @@ def display():
 				if(not arming.isArmed):
 					print("Armed")
 					arming.setIsArmed(True)
+					armingText.setMyText("Armed")
 				else:
 					print("Disarmed")
 					arming.setIsArmed(False)
+					armingText.setMyText("Disarmed")
 
 	mousePos = pygame.mouse.get_pos()
 	if(joystick.isInsideBox(mousePos)):
@@ -237,6 +260,7 @@ def publisher():
 if __name__ == '__main__':
 	arming = armButton()
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
+	armingText = armText()
 
 	publisher()
 
