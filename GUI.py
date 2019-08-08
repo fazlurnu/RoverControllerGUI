@@ -125,6 +125,7 @@ class joystickBackground:
 		self.backgroundColor = GREY
 		self.lineWidth = 7
 
+		self.lineColor = RED
 	def drawBackground(self):
 		pygame.draw.rect(controlWindow, self.backgroundColor, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
 
@@ -133,14 +134,14 @@ class joystickBackground:
 
 	def drawMidLine(self):
 		#vertical line
-		pygame.draw.line(controlWindow, self.color, (self.center[0], self.datum[1]), (self.center[0], self.datum[1]+50), lineWidth)
-		pygame.draw.line(controlWindow, self.color, (self.center[0], self.size[1]+50), (self.center[0], self.size[1]+self.datum[1]), lineWidth)
-		pygame.draw.line(controlWindow, self.color, (self.center[0], self.center[1]-25), (self.center[0], self.center[1]+25), lineWidth)
+		pygame.draw.line(controlWindow, self.lineColor, (self.center[0], self.datum[1]), (self.center[0], self.datum[1]+50), lineWidth)
+		pygame.draw.line(controlWindow, self.lineColor, (self.center[0], self.size[1]+50), (self.center[0], self.size[1]+self.datum[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.lineColor, (self.center[0], self.center[1]-25), (self.center[0], self.center[1]+25), lineWidth)
 
 		#horizontal line
-		pygame.draw.line(controlWindow, self.color, (self.datum[0], self.center[1]), (self.datum[1]+50, self.center[1]), lineWidth)
-		pygame.draw.line(controlWindow, self.color, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
-		pygame.draw.line(controlWindow, self.color, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.lineColor, (self.datum[0], self.center[1]), (self.datum[1]+50, self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.lineColor, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.lineColor, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
 
 	def isInsideBox(self, mousePos):
 		xCond = self.left<mousePos[0]<self.right
@@ -157,8 +158,8 @@ class joystickBackground:
 
 def drawBackground():
 	joystick.drawBackground()
-	joystick.drawBorder()
 	joystick.drawMidLine()
+	joystick.drawBorder()
 	arming.drawBox()
 
 	armingText.drawText()
