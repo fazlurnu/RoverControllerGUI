@@ -53,8 +53,8 @@ arm	= False
 
 class armText:
 	def __init__(self):
-		self.myText = 'Disrmed'
-		self.textColor = BLACK
+		self.myText = 'Disarmed'
+		self.textColor = RED
 		self.fontSize  = 50
 		self.font = pygame.font.Font('freesansbold.ttf', self.fontSize)
 		self.text = self.font.render(self.myText, True, self.textColor)
@@ -121,7 +121,7 @@ class joystickBackground:
 		self.top   = self.datum[1]
 		self.bottom= self.datum[1]+self.size[1]
 
-		self.color = RED
+		self.color = BLACK
 		self.backgroundColor = GREY
 		self.lineWidth = 7
 
@@ -133,14 +133,14 @@ class joystickBackground:
 
 	def drawMidLine(self):
 		#vertical line
-		pygame.draw.line(controlWindow, RED, (self.center[0], self.datum[1]), (self.center[0], self.datum[1]+50), lineWidth)
-		pygame.draw.line(controlWindow, RED, (self.center[0], self.size[1]+50), (self.center[0], self.size[1]+self.datum[1]), lineWidth)
-		pygame.draw.line(controlWindow, RED, (self.center[0], self.center[1]-25), (self.center[0], self.center[1]+25), lineWidth)
+		pygame.draw.line(controlWindow, self.color, (self.center[0], self.datum[1]), (self.center[0], self.datum[1]+50), lineWidth)
+		pygame.draw.line(controlWindow, self.color, (self.center[0], self.size[1]+50), (self.center[0], self.size[1]+self.datum[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.color, (self.center[0], self.center[1]-25), (self.center[0], self.center[1]+25), lineWidth)
 
 		#horizontal line
-		pygame.draw.line(controlWindow, RED, (self.datum[0], self.center[1]), (self.datum[1]+50, self.center[1]), lineWidth)
-		pygame.draw.line(controlWindow, RED, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
-		pygame.draw.line(controlWindow, RED, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.color, (self.datum[0], self.center[1]), (self.datum[1]+50, self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.color, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
+		pygame.draw.line(controlWindow, self.color, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
 
 	def isInsideBox(self, mousePos):
 		xCond = self.left<mousePos[0]<self.right
