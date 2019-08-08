@@ -10,10 +10,23 @@ import sys
 import time
 import numpy as np
 
+#color
+RED 	= (250,  0,  0)
+GREEN	= (  0,250,  0)
+BLUE	= (  0,  0,255)
+BLACK	= (  0,  0,  0)
+WHITE	= (250,250,250)
+GREY	= (175,175,175)
+
+LIGHT_RED	= (175,  0,  0)
+LIGHT_GREEN	= (  0, 175,  0)
+
 pygame.init()
 controlWindowWidth  = 750
 controlWindowHeight = 750
 controlWindow = pygame.display.set_mode((controlWindowWidth,controlWindowHeight))
+controlWindow.fill(GREY)
+
 pygame.display.set_caption("Controller")
 
 joystickWindowWidth = 500
@@ -21,12 +34,6 @@ joystickWindowHeight= 500
 joystickMinBorder   = 125
 joystickMaxBorder   = 625
 
-#color
-RED 	= (250,  0,  0)
-GREEN	= (  0,250,  0)
-BLUE	= (  0,  0,255)
-BLACK	= (  0,  0,  0)
-WHITE	= (250,250,250)
 
 #circle params
 center=[controlWindowWidth/2,controlWindowHeight/2]
@@ -46,7 +53,9 @@ arm	= False
 
 class armButton:
 	def __init__(self):
-		self.color= RED
+		self.color= LIGHT_RED
+		self.lineWidth = 7
+
 		self.size = [200, 75]
 		self.center = [controlWindowWidth/2, controlWindowHeight/2]
 		self.datum = [self.center[0]-self.size[0]/2, 625+self.size[1]/2]
@@ -60,16 +69,31 @@ class armButton:
 	def drawBox(self):
 		pygame.draw.rect(controlWindow, self.color, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
 
+	def drawBorder(self):
+		pygame.draw.rect(controlWindow, BLACK, (self.datum[0], self.datum[1], self.size[0], self.size[1]), self.lineWidth)
+
 	def isClicked(self, mousePosition):
 		xCond = self.left<mousePosition[0]<self.right
 		yCond =	self.top<mousePosition[1]<self.bottom
 		if(xCond and yCond):
 			if(not self.isArmed):
+				print("Armed")
 				self.isArmed=True
-				self.color  =GREEN
+				self.setColor(LIGHT_GREEN)
 			else:
+				print("Disarmed")
 				self.isArmed=False
-				self.color  =RED
+				self.setColor(LIGHT_RED)
+			return True
+		else: return False
+
+	def setColor(self, color):
+		self.color = color
+
+	def isInsideBox(self, mousePos):
+		xCond = self.left<mousePos[0]<self.right
+		yCond =	self.top<mousePos[1]<self.bottom
+		if(xCond and yCond):
 			return True
 		else: return False
 
@@ -79,8 +103,20 @@ class joystickBackground:
 		self.center = [controlWindowWidth/2, controlWindowHeight/2]
 		self.datum  = [(controlWindowWidth-width)/2, (controlWindowHeight-height)/2]
 
+		self.left  = self.datum[0]
+		self.right = self.datum[0]+self.size[0]
+		self.top   = self.datum[1]
+		self.bottom= self.datum[1]+self.size[1]
+
+		self.color = RED
+		self.backgroundColor = GREY
+		self.lineWidth = 7
+
+	def drawBackground(self):
+		pygame.draw.rect(controlWindow, self.backgroundColor, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
+
 	def drawBorder(self):
-		pygame.draw.rect(controlWindow, RED, (self.datum[0], self.datum[1], self.size[0], self.size[1]), lineWidth)
+		pygame.draw.rect(controlWindow, self.color, (self.datum[0], self.datum[1], self.size[0], self.size[1]), self.lineWidth)
 
 	def drawMidLine(self):
 		#vertical line
@@ -93,12 +129,23 @@ class joystickBackground:
 		pygame.draw.line(controlWindow, RED, (self.size[0]+50, self.center[1]), (self.size[0]+self.datum[0], self.center[1]), lineWidth)
 		pygame.draw.line(controlWindow, RED, (self.center[0]-25, self.center[1]), (self.center[0]+25, self.center[1]), lineWidth)
 
+	def isInsideBox(self, mousePos):
+		xCond = self.left<mousePos[0]<self.right
+		yCond =	self.top<mousePos[1]<self.bottom
+		if(xCond and yCond):
+			return True
+		else: return False
+
+	def setColor(self, color):
+		self.color = color
+
+	def setBackgroundColor(self, color):
+		self.backgroundColor = color
+
 def drawBackground():
-	controlWindow.fill(WHITE)
-	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
+	joystick.drawBackground()
 	joystick.drawBorder()
 	joystick.drawMidLine()
-
 	arming.drawBox()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
@@ -128,9 +175,6 @@ def constraint(pos, min, max):
 
 	return posCalc
 
-def insideBoxOrNot(pos, min, max):
-	if(min<pos[0]<max and min<pos[1]<max): return True
-
 def display():
 	pygame.time.delay(100)
 	for e in pygame.event.get():
@@ -138,23 +182,39 @@ def display():
 			run = False
 			pygame.quit()
 			sys.exit()
-		while e.type == pygame.MOUSEBUTTONDOWN:
+		if e.type == pygame.MOUSEBUTTONDOWN:
 			getPos = pygame.mouse.get_pos()
-			if(insideBoxOrNot(getPos,joystickMinBorder,joystickMaxBorder)):
+			if(joystick.isInsideBox(getPos)):
 				center[0] = getPos[0]
 				center[1] = getPos[1]
 				myPosX, myPosY = globalToLocal(center[0], center[1])
 				myPosX, myPosY = transform(myPosX, myPosY)
 				vel_msg.angular.z = myPosX/10
 				vel_msg.linear.x = myPosY/10
-			else:
-				if(arming.isClicked(getPos)):
-					print("clicked")
+			elif(arming.isClicked(getPos)):
+					print()
 					#publish ARM CONDITION
 
-	centerTrack[0], centerTrack[1] = pygame.mouse.get_pos()
-	centerTrack[0] = constraint(centerTrack[0], 125, 625)
-	centerTrack[1] = constraint(centerTrack[1], 125, 625)
+	mousePos = pygame.mouse.get_pos()
+	if(joystick.isInsideBox(mousePos)):
+		joystick.setBackgroundColor(WHITE)
+		controlWindow.fill(GREY)
+		centerTrack[0] = mousePos[0]
+		centerTrack[1] = mousePos[1]
+	else:
+		joystick.setBackgroundColor(GREY)
+		controlWindow.fill(WHITE)
+
+	if(arming.isInsideBox(mousePos) and not arming.isArmed):
+		arming.setColor(RED)
+		arming.drawBorder()
+	elif(arming.isInsideBox(mousePos) and arming.isArmed):
+		arming.setColor(GREEN)
+		arming.drawBorder()
+	elif(not arming.isInsideBox(mousePos) and arming.isArmed):
+		arming.setColor(LIGHT_GREEN)
+	elif(not arming.isInsideBox(mousePos) and not arming.isArmed):
+		arming.setColor(LIGHT_RED)
 
 	drawToScreen()
 	pygame.display.update()
@@ -178,6 +238,8 @@ def publisher():
 
 if __name__ == '__main__':
 	arming = armButton()
+	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
+
 	publisher()
 
 ###Below here are probably useful functions, "probably"
