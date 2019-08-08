@@ -20,6 +20,9 @@ GREY	= (175,175,175)
 
 DARK_RED    = (175,  0,  0)
 DARK_GREEN  = (  0,175,  0)
+DARK_GREY   = (100,100,100)
+
+LIGHT_GREY  = (200,200,200)
 
 pygame.init()
 controlWindowWidth  = 750
@@ -51,11 +54,21 @@ run = True
 vel_msg = Twist()
 arm	= False
 
-class armText:
-	def __init__(self):
-		self.myText = 'Disarmed'
-		self.textColor = RED
-		self.fontSize  = 50
+def map(input, in_min, in_max, out_min, out_max):
+	return (input - in_min)*(out_max-out_min)/(in_max-in_min)+out_min
+
+def constraint(pos, min, max):
+	posCalc = pos
+	if pos > max: posCalc = max
+	elif pos < min: posCalc = min
+
+	return posCalc
+
+class Text:
+	def __init__(self, yourText, color, fontSize):
+		self.myText = yourText
+		self.textColor = color
+		self.fontSize  = fontSize
 		self.font = pygame.font.Font('freesansbold.ttf', self.fontSize)
 		self.text = self.font.render(self.myText, True, self.textColor)
 		self.textRect = self.text.get_rect()
@@ -70,10 +83,60 @@ class armText:
 		self.textRect = self.text.get_rect()
 		self.textRect.center = (controlWindowWidth/2,63)
 
-class armButton:
+	def setPos(self, xPos, yPos):
+		self.textRect.center = (xPos,yPos)
+
+class Slider:
 	def __init__(self):
-		self.color= DARK_RED
-		self.lineWidth = 7
+		self.color = LIGHT_GREY
+		self.lineWidth = 5
+
+		self.size = [50, 150]
+		self.center = [controlWindowWidth/2, controlWindowHeight/2]
+		self.datum = [630+self.size[0]/2, self.center[1]-self.size[1]/2]
+		self.left  = self.datum[0]
+		self.right = self.datum[0]+self.size[0]
+		self.top   = self.datum[1]
+		self.bottom= self.datum[1]+self.size[1]
+		self.localCenterX = (self.left + self.right)/2
+
+		self.sliderPosRad = 10
+		self.sliderTop	  = self.top+20
+		self.sliderBottom = self.bottom-20
+		self.sliderPos	  = [self.localCenterX, self.sliderBottom]
+
+	def drawSlider(self):
+		pygame.draw.rect(controlWindow, self.color, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
+		pygame.draw.rect(controlWindow, BLACK, (self.datum[0], self.datum[1], self.size[0], self.size[1]), self.lineWidth)
+		pygame.draw.line(controlWindow, BLACK, (self.localCenterX, self.sliderTop), (self.localCenterX, self.sliderBottom), self.lineWidth)
+		pygame.draw.circle(controlWindow, RED  , (tuple(self.sliderPos)), self.sliderPosRad)
+
+	def isInsideSlider(self, mousePos):
+		xCond = self.left<mousePos[0]<self.right
+		yCond =	self.top<mousePos[1]<self.bottom
+		if(xCond and yCond):
+			return True
+		else: return False
+
+	def isMoved(self, mousePos):
+		tolerance = 3
+		xCond = self.localCenterX-tolerance<mousePos[0]<self.localCenterX+tolerance
+		yCond = self.sliderTop-tolerance<mousePos[1]<self.sliderBottom+tolerance
+
+		if(xCond and yCond): return True
+		else: return False
+
+	def setColor(self, color):
+		self.color = color
+
+	def getValue(self):
+		value = map(self.sliderPos[1], self.sliderBottom, self.sliderTop, 0, 100)
+		return constraint(value, 0, 100)
+
+class Button:
+	def __init__(self, color, lineWidth):
+		self.color = color
+		self.lineWidth = lineWidth
 
 		self.size = [200, 75]
 		self.center = [controlWindowWidth/2, controlWindowHeight/2]
@@ -82,8 +145,11 @@ class armButton:
 		self.right = self.datum[0]+self.size[0]
 		self.top   = self.datum[1]
 		self.bottom= self.datum[1]+self.size[1]
+		self.localCenter = [(self.left+self.right)/2, (self.top+self.bottom)/2]
 
 		self.isArmed = False
+		self.text = Text("Arm/Disarm", BLACK, 32)
+		self.text.setPos(self.localCenter[0], self.localCenter[1])
 
 	def drawBox(self):
 		pygame.draw.rect(controlWindow, self.color, (self.datum[0], self.datum[1], self.size[0], self.size[1]))
@@ -160,9 +226,13 @@ def drawBackground():
 	joystick.drawBackground()
 	joystick.drawMidLine()
 	joystick.drawBorder()
+
 	arming.drawBox()
+	arming.text.drawText()
 
 	armingText.drawText()
+
+	screenSlider.drawSlider()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
 def drawOutputCircle():
@@ -184,47 +254,41 @@ def transform(posX, posY):
 	#transform from frame coordinate to "remote control" coordinate
 	return posX-250, -(posY-250)
 
-def constraint(pos, min, max):
-	posCalc = pos
-	if pos > max: posCalc = max
-	elif pos < min: posCalc = min
-
-	return posCalc
-
 def display():
 	pygame.time.delay(100)
+	mousePos = pygame.mouse.get_pos()
 	for e in pygame.event.get():
 		if e.type == pygame.QUIT:
 			run = False
 			pygame.quit()
 			sys.exit()
 		if e.type == pygame.MOUSEBUTTONDOWN:
-			getPos = pygame.mouse.get_pos()
-			if(joystick.isInsideBox(getPos)):
-				center[0] = getPos[0]
-				center[1] = getPos[1]
+			if(joystick.isInsideBox(mousePos)):
+				center[0] = mousePos[0]
+				center[1] = mousePos[1]
 				myPosX, myPosY = globalToLocal(center[0], center[1])
 				myPosX, myPosY = transform(myPosX, myPosY)
 				vel_msg.angular.z = myPosX/10
 				vel_msg.linear.x = myPosY/10
-			elif(arming.isClicked(getPos)):
+			elif(arming.isClicked(mousePos)):
 				if(not arming.isArmed):
-					print("Armed")
 					arming.setIsArmed(True)
 					armingText.setMyText("Armed")
 				else:
-					print("Disarmed")
 					arming.setIsArmed(False)
 					armingText.setMyText("Disarmed")
+			elif(screenSlider.isMoved(mousePos)):
+				screenSlider.sliderPos[0] = screenSlider.localCenterX
+				screenSlider.sliderPos[1] = mousePos[1]
+				vel_msg.linear.z=screenSlider.getValue()
 
-	mousePos = pygame.mouse.get_pos()
 	if(joystick.isInsideBox(mousePos)):
 		joystick.setBackgroundColor(WHITE)
-		controlWindow.fill(GREY)
+		controlWindow.fill(DARK_GREY)
 		centerTrack[0] = mousePos[0]
 		centerTrack[1] = mousePos[1]
 	else:
-		joystick.setBackgroundColor(GREY)
+		joystick.setBackgroundColor(LIGHT_GREY)
 		controlWindow.fill(WHITE)
 
 	if(arming.isInsideBox(mousePos) and not arming.isArmed):
@@ -237,6 +301,11 @@ def display():
 		arming.setColor(DARK_GREEN)
 	elif(not arming.isInsideBox(mousePos) and not arming.isArmed):
 		arming.setColor(DARK_RED)
+
+	if(screenSlider.isInsideSlider(mousePos)):
+		screenSlider.setColor(WHITE)
+		controlWindow.fill(DARK_GREY)
+	else: screenSlider.setColor(LIGHT_GREY)
 
 	drawToScreen()
 	pygame.display.update()
@@ -259,9 +328,11 @@ def publisher():
 	rospy.spin()
 
 if __name__ == '__main__':
-	arming = armButton()
+	arming = Button(DARK_RED, 7)
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
-	armingText = armText()
+	armingText = Text("Disarmed", RED, 50)
+
+	screenSlider = Slider()
 
 	publisher()
 
