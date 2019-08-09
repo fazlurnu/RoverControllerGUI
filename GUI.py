@@ -274,9 +274,12 @@ def display():
 				if(not arming.isArmed):
 					arming.setIsArmed(True)
 					armingText.setMyText("Armed")
+					myPublisher.pubArm.publish(arming.isArmed)
 				else:
 					arming.setIsArmed(False)
 					armingText.setMyText("Disarmed")
+					myPublisher.pubArm.publish(arming.isArmed)
+
 			elif(screenSlider.isMoved(mousePos)):
 				screenSlider.sliderPos[0] = screenSlider.localCenterX
 				screenSlider.sliderPos[1] = mousePos[1]
@@ -310,31 +313,30 @@ def display():
 	drawToScreen()
 	pygame.display.update()
 
-def publisher():
-	rospy.init_node('controller', anonymous = True)
-	pub 	= rospy.Publisher('/positionControl', Twist, queue_size=1)
-	pubArm 	= rospy.Publisher('/armCommand'	, Bool , queue_size=1)
+class publisher():
+	def __init__(self):
+		rospy.init_node('controller', anonymous = True)
+		self.pubControl = rospy.Publisher('/positionControl', Twist, queue_size=1)
+		self.pubArm     = rospy.Publisher('/armCommand'	, Bool , queue_size=1)
 
-	vel_msg.linear.y = 0
-	vel_msg.linear.z = 0
-	vel_msg.angular.x = 0
-	vel_msg.angular.y = 0
-
-	while not rospy.is_shutdown():
-		display()
-		pub.publish(vel_msg)
-		pubArm.publish(arming.isArmed)
-
-	rospy.spin()
+		vel_msg.linear.y = 0
+		vel_msg.linear.z = 0
+		vel_msg.angular.x = 0
+		vel_msg.angular.y = 0
 
 if __name__ == '__main__':
 	arming = Button(DARK_RED, 7)
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
 	armingText = Text("Disarmed", RED, 50)
-
 	screenSlider = Slider()
 
-	publisher()
+	myPublisher = publisher()
+
+	while not rospy.is_shutdown():
+		display()
+		myPublisher.pubControl.publish(vel_msg)
+
+	rospy.spin()
 
 ###Below here are probably useful functions, "probably"
 
