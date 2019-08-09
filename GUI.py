@@ -122,7 +122,7 @@ class Slider:
 		else: return False
 
 	def isMoved(self, mousePos):
-		tolerance = 3
+		tolerance = 5
 		xCond = self.localCenterX-tolerance<mousePos[0]<self.localCenterX+tolerance
 		yCond = self.sliderTop-tolerance<mousePos[1]<self.sliderBottom+tolerance
 
@@ -264,6 +264,15 @@ def getState(msg):
 	global mavlinkArmed
 	mavlinkArmed = msg.armed
 
+#def disarm():
+#	ropsy.wait_for_service('/mavros/cmd/arming')
+#	try:
+#		armService = rospy.ServiceProxy('/mavros/cmd/arming', CommandBool)
+#		armResponse = armService(False)
+#		rospy.loginfo(armResponse)
+#	except rospy.ServiceException as e:
+#		print("Service call failsed: %s" %e)
+
 def display():
 	pygame.time.delay(100)
 	mousePos = pygame.mouse.get_pos()
@@ -348,6 +357,7 @@ if __name__ == '__main__':
 		display()
 		myPublisher.pubControl.publish(vel_msg)
 
+	rospy.on_shutdown(disarmRobot)
 	rospy.spin()
 
 ###Below here are probably useful functions, "probably"
