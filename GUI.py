@@ -5,6 +5,8 @@ from std_msgs.msg import Float64
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool
 
+from mavros_msgs.msg import State
+
 import pygame
 import sys
 import time
@@ -53,6 +55,7 @@ run = True
 
 vel_msg = Twist()
 arm	= False
+mavlinkArmed = False
 
 def map(input, in_min, in_max, out_min, out_max):
 	return (input - in_min)*(out_max-out_min)/(in_max-in_min)+out_min
@@ -254,6 +257,13 @@ def transform(posX, posY):
 	#transform from frame coordinate to "remote control" coordinate
 	return posX-250, -(posY-250)
 
+def subscriber():
+	rospy.Subscriber("mavros/state", State, getState)
+
+def getState(msg):
+	global mavlinkArmed
+	mavlinkArmed = msg.armed
+
 def display():
 	pygame.time.delay(100)
 	mousePos = pygame.mouse.get_pos()
@@ -273,11 +283,9 @@ def display():
 			elif(arming.isClicked(mousePos)):
 				if(not arming.isArmed):
 					arming.setIsArmed(True)
-					armingText.setMyText("Armed")
 					myPublisher.pubArm.publish(arming.isArmed)
 				else:
 					arming.setIsArmed(False)
-					armingText.setMyText("Disarmed")
 					myPublisher.pubArm.publish(arming.isArmed)
 
 			elif(screenSlider.isMoved(mousePos)):
@@ -310,6 +318,9 @@ def display():
 		controlWindow.fill(DARK_GREY)
 	else: screenSlider.setColor(LIGHT_GREY)
 
+	if(mavlinkArmed): armingText.setMyText("Armed")
+	elif(not mavlinkArmed):	armingText.setMyText("Disarmed")
+
 	drawToScreen()
 	pygame.display.update()
 
@@ -324,12 +335,13 @@ class publisher():
 		vel_msg.angular.x = 0
 		vel_msg.angular.y = 0
 
+
 if __name__ == '__main__':
 	arming = Button(DARK_RED, 7)
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
 	armingText = Text("Disarmed", RED, 50)
 	screenSlider = Slider()
-
+	subscriber()
 	myPublisher = publisher()
 
 	while not rospy.is_shutdown():
