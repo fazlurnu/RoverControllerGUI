@@ -257,7 +257,7 @@ def globalToLocal(posX, posY):
 
 def transform(posX, posY):
 	#transform from frame coordinate to "remote control" coordinate
-	return posX-250, -(posY-250)
+	return posX-joystickWindowWidth, -(posY-joystickWindowHeight)
 
 def subscriber():
 	rospy.Subscriber("mavros/state", State, getState)
@@ -289,8 +289,8 @@ def display():
 				center[1] = mousePos[1]
 				myPosX, myPosY = globalToLocal(center[0], center[1])
 				myPosX, myPosY = transform(myPosX, myPosY)
-				vel_msg.angular.z = myPosX/10
-				vel_msg.linear.x = myPosY/10
+				vel_msg.angular.z = myPosX
+				vel_msg.linear.x = myPosY
 			elif(arming.isClicked(mousePos)):
 				if(not arming.isArmed):
 					arming.setIsArmed(True)
