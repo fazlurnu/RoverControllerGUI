@@ -257,7 +257,7 @@ def globalToLocal(posX, posY):
 
 def transform(posX, posY):
 	#transform from frame coordinate to "remote control" coordinate
-	return posX-joystickWindowWidth, -(posY-joystickWindowHeight)
+	return posX-joystickWindowWidth/2, -(posY-joystickWindowHeight/2)
 
 def subscriber():
 	rospy.Subscriber("mavros/state", State, getState)

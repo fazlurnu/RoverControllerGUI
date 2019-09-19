@@ -172,12 +172,81 @@ class Button:
 	def isInsideBox(self, mousePos):
 		xCond = self.left<mousePos[0]<self.right
 		yCond =	self.top<mousePos[1]<self.bottom
-		if(xCond and yCond):
-			return True
+		if(xCond and yCond): return True
 		else: return False
 
 	def setIsArmed(self, cond):
 		self.isArmed = cond
+
+class upArrow:
+	def __init__(self, color, datum, base, height):
+		self.isUp = False
+		self.color = color
+		self.lineWidth = 7
+
+		#datum is the left bottom point
+		self.base 	= base
+		self.height 	= height
+		self.pointLeft	= [datum[0], datum[1]]
+		self.pointRight	= [datum[0] + self.base, datum[1]]
+		self.pointTop	= [(datum[0]+datum[0]+self.base)/2, datum[1]-self.height]
+
+	def drawButton(self):
+		pygame.draw.polygon(controlWindow, self.color, [self.pointLeft, self.pointRight, self.pointTop])
+
+	def grad(self, pointLeft, pointRight, mousePos):
+		return (pointRight[1]-pointLeft[1])/(pointRight[0]-pointLeft[0])*(mousePos[0] - pointLeft[0])+pointRight[1]
+
+	def isInsideButton(self, mousePos):
+		if self.pointLeft[0]<mousePos[0]<self.pointTop[0]:
+			if mousePos[1]>self.grad(self.pointLeft, self.pointTop, mousePos):
+				if self.pointTop[1]<mousePos[1]<self.pointLeft[1]:
+					return True
+		if self.pointTop[0]<mousePos[0]<self.pointRight[0]:
+			if mousePos[1]>self.grad(self.pointRight, self.pointTop, mousePos):
+				if self.pointTop[1]<mousePos[1]<self.pointRight[1]:
+					return True
+
+	def setColor(self, color):
+		self.color = color
+
+	def setIsUp(self, cond):
+		self.isUp=cond
+
+class downArrow:
+	def __init__(self, color, datum, base, height):
+		self.isUp = False
+		self.color = color
+		self.lineWidth = 7
+
+		#datum is the left bottom point
+		self.base 	= base
+		self.height 	= height
+		self.pointLeft	= [datum[0], datum[1]]
+		self.pointRight	= [datum[0] + self.base, datum[1]]
+		self.pointTop	= [(datum[0]+datum[0]+self.base)/2, datum[1]-self.height]
+
+	def drawButton(self):
+		pygame.draw.polygon(controlWindow, self.color, [self.pointLeft, self.pointRight, self.pointTop])
+
+	def grad(self, pointLeft, pointRight, mousePos):
+		return (pointRight[1]-pointLeft[1])/(pointRight[0]-pointLeft[0])*(mousePos[0] - pointLeft[0])+pointRight[1]
+
+	def isInsideButton(self, mousePos):
+		if self.pointLeft[0]<mousePos[0]<self.pointTop[0]:
+			if mousePos[1]<self.grad(self.pointLeft, self.pointTop, mousePos):
+				if self.pointLeft[1]<mousePos[1]<self.pointTop[1]:
+					return True
+		if self.pointTop[0]<mousePos[0]<self.pointRight[0]:
+			if mousePos[1]<self.grad(self.pointRight, self.pointTop, mousePos):
+				if self.pointRight[1]<mousePos[1]<self.pointTop[1]:
+					return True
+
+	def setColor(self, color):
+		self.color = color
+
+	def setIsUp(self, cond):
+		self.isUp=cond
 
 class joystickBackground:
 	def __init__(self, width, height):
@@ -235,7 +304,8 @@ def drawBackground():
 
 	armingText.drawText()
 
-	screenSlider.drawSlider()
+	upArrow.drawButton()
+	downArrow.drawButton()
 	#pygame.draw.circle(controlWindow, RED, (controlWindowWidth/2,controlWindowHeight/2), controlWindowWidth/2, lineWidth)
 
 def drawOutputCircle():
@@ -264,6 +334,73 @@ def getState(msg):
 	global mavlinkArmed
 	mavlinkArmed = msg.armed
 
+def checkJoystick(mousePos):
+	if(joystick.isInsideBox(mousePos)):
+		joystick.setBackgroundColor(WHITE)
+		controlWindow.fill(DARK_GREY)
+		centerTrack[0] = mousePos[0]
+		centerTrack[1] = mousePos[1]
+	else:
+		joystick.setBackgroundColor(LIGHT_GREY)
+		controlWindow.fill(WHITE)
+
+def checkArmingButton(mousePos):
+	if(arming.isInsideBox(mousePos) and not arming.isArmed):
+		arming.setColor(RED)
+		arming.drawBorder()
+	elif(arming.isInsideBox(mousePos) and arming.isArmed):
+		arming.setColor(GREEN)
+		arming.drawBorder()
+	elif(not arming.isInsideBox(mousePos) and arming.isArmed):
+		arming.setColor(DARK_GREEN)
+	elif(not arming.isInsideBox(mousePos) and not arming.isArmed):
+		arming.setColor(DARK_RED)
+
+def checkArrows(mousePos):
+	if(upArrow.isInsideButton(mousePos) and upArrow.isUp):
+		upArrow.setColor(GREEN)
+	elif(not upArrow.isInsideButton(mousePos) and upArrow.isUp):
+		upArrow.setColor(DARK_GREEN)
+	elif(upArrow.isInsideButton(mousePos) and not upArrow.isUp):
+		upArrow.setColor(RED)
+	elif(not upArrow.isInsideButton(mousePos) and not upArrow.isUp):
+		upArrow.setColor(DARK_RED)
+
+	if(downArrow.isInsideButton(mousePos) and downArrow.isUp):
+		downArrow.setColor(GREEN)
+	elif(not downArrow.isInsideButton(mousePos) and downArrow.isUp):
+		downArrow.setColor(DARK_GREEN)
+	elif(downArrow.isInsideButton(mousePos) and not downArrow.isUp):
+		downArrow.setColor(RED)
+	elif(not downArrow.isInsideButton(mousePos) and not downArrow.isUp):
+		downArrow.setColor(DARK_RED)
+
+def upArrowIsClicked(mousePos):
+	if(upArrow.isInsideButton(mousePos)):
+		if(not upArrow.isUp):
+			upArrow.setIsUp(True)
+			vel_msg.linear.z = 100
+		else:
+			upArrow.setIsUp(False)
+			vel_msg.linear.z = 0
+
+def downArrowIsClicked(mousePos):
+	if(downArrow.isInsideButton(mousePos)):
+		if(not downArrow.isUp):
+			downArrow.setIsUp(True)
+			vel_msg.linear.z = -100
+		else:
+			downArrow.setIsUp(False)
+			vel_msg.linear.z = 0
+
+def armingButtonIsClicked(mousePos):
+	if(arming.isClicked(mousePos)):
+		if(not arming.isArmed):
+			arming.setIsArmed(True)
+			myPublisher.pubArm.publish(arming.isArmed)
+		else:
+			arming.setIsArmed(False)
+			myPublisher.pubArm.publish(arming.isArmed)
 #def disarm():
 #	ropsy.wait_for_service('/mavros/cmd/arming')
 #	try:
@@ -289,43 +426,14 @@ def display():
 				myPosX, myPosY = transform(myPosX, myPosY)
 				vel_msg.angular.z = myPosX/10
 				vel_msg.linear.x = myPosY/10
-			elif(arming.isClicked(mousePos)):
-				if(not arming.isArmed):
-					arming.setIsArmed(True)
-					myPublisher.pubArm.publish(arming.isArmed)
-				else:
-					arming.setIsArmed(False)
-					myPublisher.pubArm.publish(arming.isArmed)
 
-			elif(screenSlider.isMoved(mousePos)):
-				screenSlider.sliderPos[0] = screenSlider.localCenterX
-				screenSlider.sliderPos[1] = mousePos[1]
-				vel_msg.linear.z=screenSlider.getValue()
+			armingButtonIsClicked(mousePos)
+			upArrowIsClicked(mousePos)
+			downArrowIsClicked(mousePos)
 
-	if(joystick.isInsideBox(mousePos)):
-		joystick.setBackgroundColor(WHITE)
-		controlWindow.fill(DARK_GREY)
-		centerTrack[0] = mousePos[0]
-		centerTrack[1] = mousePos[1]
-	else:
-		joystick.setBackgroundColor(LIGHT_GREY)
-		controlWindow.fill(WHITE)
-
-	if(arming.isInsideBox(mousePos) and not arming.isArmed):
-		arming.setColor(RED)
-		arming.drawBorder()
-	elif(arming.isInsideBox(mousePos) and arming.isArmed):
-		arming.setColor(GREEN)
-		arming.drawBorder()
-	elif(not arming.isInsideBox(mousePos) and arming.isArmed):
-		arming.setColor(DARK_GREEN)
-	elif(not arming.isInsideBox(mousePos) and not arming.isArmed):
-		arming.setColor(DARK_RED)
-
-	if(screenSlider.isInsideSlider(mousePos)):
-		screenSlider.setColor(WHITE)
-		controlWindow.fill(DARK_GREY)
-	else: screenSlider.setColor(LIGHT_GREY)
+	checkJoystick(mousePos)
+	checkArmingButton(mousePos)
+	checkArrows(mousePos)
 
 	if(mavlinkArmed): armingText.setMyText("Armed")
 	elif(not mavlinkArmed):	armingText.setMyText("Disarmed")
@@ -349,7 +457,8 @@ if __name__ == '__main__':
 	arming = Button(DARK_RED, 7)
 	joystick = joystickBackground(joystickWindowWidth, joystickWindowHeight)
 	armingText = Text("Disarmed", RED, 50)
-	screenSlider = Slider()
+	upArrow = upArrow(DARK_RED, [650, (controlWindowHeight/2)-25], 80, 60)
+	downArrow = downArrow(DARK_RED, [650, (controlWindowHeight/2)+25], 80, -60)
 	subscriber()
 	myPublisher = publisher()
 
@@ -357,7 +466,6 @@ if __name__ == '__main__':
 		display()
 		myPublisher.pubControl.publish(vel_msg)
 
-	rospy.on_shutdown(disarmRobot)
 	rospy.spin()
 
 ###Below here are probably useful functions, "probably"
