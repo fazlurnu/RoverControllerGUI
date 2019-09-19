@@ -198,13 +198,13 @@ class upArrow:
 		return (pointRight[1]-pointLeft[1])/(pointRight[0]-pointLeft[0])*(mousePos[0] - pointLeft[0])+pointRight[1]
 
 	def isInsideButton(self, mousePos):
-		if self.pointLeft[0]<mousePos[0]<self.pointTop[0]:
-			if mousePos[1]>self.grad(self.pointLeft, self.pointTop, mousePos):
-				if self.pointTop[1]<mousePos[1]<self.pointLeft[1]:
+		if self.pointLeft[0]<=mousePos[0]<self.pointTop[0]:
+			if mousePos[1]>=self.grad(self.pointLeft, self.pointTop, mousePos):
+				if self.pointTop[1]<=mousePos[1]<self.pointLeft[1]:
 					return True
-		if self.pointTop[0]<mousePos[0]<self.pointRight[0]:
-			if mousePos[1]>self.grad(self.pointRight, self.pointTop, mousePos):
-				if self.pointTop[1]<mousePos[1]<self.pointRight[1]:
+		if self.pointTop[0]<=mousePos[0]<self.pointRight[0]:
+			if mousePos[1]>=self.grad(self.pointRight, self.pointTop, mousePos):
+				if self.pointTop[1]<=mousePos[1]<self.pointRight[1]:
 					return True
 
 	def setColor(self, color):
@@ -233,13 +233,13 @@ class downArrow:
 		return (pointRight[1]-pointLeft[1])/(pointRight[0]-pointLeft[0])*(mousePos[0] - pointLeft[0])+pointRight[1]
 
 	def isInsideButton(self, mousePos):
-		if self.pointLeft[0]<mousePos[0]<self.pointTop[0]:
-			if mousePos[1]<self.grad(self.pointLeft, self.pointTop, mousePos):
-				if self.pointLeft[1]<mousePos[1]<self.pointTop[1]:
+		if self.pointLeft[0]<=mousePos[0]<self.pointTop[0]:
+			if mousePos[1]<=self.grad(self.pointLeft, self.pointTop, mousePos):
+				if self.pointLeft[1]<=mousePos[1]<self.pointTop[1]:
 					return True
-		if self.pointTop[0]<mousePos[0]<self.pointRight[0]:
-			if mousePos[1]<self.grad(self.pointRight, self.pointTop, mousePos):
-				if self.pointRight[1]<mousePos[1]<self.pointTop[1]:
+		if self.pointTop[0]<=mousePos[0]<self.pointRight[0]:
+			if mousePos[1]<=self.grad(self.pointRight, self.pointTop, mousePos):
+				if self.pointRight[1]<=mousePos[1]<self.pointTop[1]:
 					return True
 
 	def setColor(self, color):
@@ -380,6 +380,8 @@ def upArrowIsClicked(mousePos):
 		if(not upArrow.isUp):
 			upArrow.setIsUp(True)
 			vel_msg.linear.z = 100
+			if(downArrow.isUp):
+				downArrow.setIsUp(False)
 		else:
 			upArrow.setIsUp(False)
 			vel_msg.linear.z = 0
@@ -389,6 +391,8 @@ def downArrowIsClicked(mousePos):
 		if(not downArrow.isUp):
 			downArrow.setIsUp(True)
 			vel_msg.linear.z = -100
+			if(upArrow.isUp):
+				upArrow.setIsUp(False)
 		else:
 			downArrow.setIsUp(False)
 			vel_msg.linear.z = 0
